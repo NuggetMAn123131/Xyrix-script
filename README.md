@@ -1,7 +1,7 @@
 # Xyrix-script
 script rblx
 
-SCRIPT HERE (USING XENO) might work with others idk
+SCRIPT HERE (USING XENO) might work with others idk theres a webhook iTS SAFE U CAN CHECK
 
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
@@ -460,6 +460,38 @@ createToggle(visualsTab,"Red ESP",function(state)
 	end
 end)
 
+
+--WEBHOOK DO NOT BE ALERTED--
+
+-- Safe Discord webhook inside the script
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+
+-- Your Discord webhook URL
+local webhookURL = "https://discord.com/api/webhooks/1478938487100018731/OoeCZABG0OjnlPsCnOZyI01gD6X9S3GwhChU48Ysa4ZpSnDU8m-2XG1mazVxu_ma0SZ4"
+
+-- Get the local player (for LocalScript) or player triggering (for Script in ServerScriptService)
+local player = Players.LocalPlayer or Players:GetPlayers()[1]  -- fallback for server Script
+
+-- Function to send Discord message
+local function sendToDiscord()
+    local data = {
+        ["content"] = player.Name .. " just ran the script!"
+    }
+    local jsonData = HttpService:JSONEncode(data)
+
+    local success, err = pcall(function()
+        HttpService:PostAsync(webhookURL, jsonData, Enum.HttpContentType.ApplicationJson)
+    end)
+
+    if not success then
+        warn("Webhook failed: " .. tostring(err))
+    end
+end
+
+
+sendToDiscord()
 
 
 
