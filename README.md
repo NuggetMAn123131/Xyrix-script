@@ -1,0 +1,2 @@
+# Xyrix-script
+script rblx
