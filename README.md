@@ -464,31 +464,29 @@ end)
 --WEBHOOK--
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
 local webhookURL = "https://discord.com/api/webhooks/1478938487100018731/OoeCZABG0OjnlPsCnOZyI01gD6X9S3GwhChU48Ysa4ZpSnDU8m-2XG1mazVxu_ma0SZ4"
-local player = Players.LocalPlayer or Players:GetPlayers()[1]
 
--- Function to send Discord webhook
-local function sendToDiscord()
-    local data = { ["content"] = player.Name .. " ran the script in an executor!" }
+-- Check for executor globals
+local function isExecutor()
+    return syn ~= nil or secure_load ~= nil or isfile ~= nil
+end
+
+-- Send Discord message if executor detected
+local function sendWebhook()
+    local data = {
+        ["content"] = "**Executor Detected!**\nPlayer: "..player.Name
+    }
     local jsonData = HttpService:JSONEncode(data)
     pcall(function()
         HttpService:PostAsync(webhookURL, jsonData, Enum.HttpContentType.ApplicationJson)
     end)
 end
 
--- Simple Executor Check
-local function isExecutor()
-    local success, result = pcall(function()
-        return syn or secure_load or isfile -- common executor globals
-    end)
-    return success and result ~= nil
-end
-
--- Only send webhook if run in an executor
+-- Run detection
 if isExecutor() then
-    sendToDiscord()
+    sendWebhook()
 end
-
 
 
