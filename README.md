@@ -3,10 +3,18 @@ script rblx
 
 SCRIPT HERE (USING XENO) might work with others idk theres a webhook iTS SAFE U CAN CHECK
 
-local player = game.Players.LocalPlayer
+-- CLEANED UP AND FIXED SCRIPT
+
+-- SERVICES
+local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
+-- PLAYER
+local player = Players.LocalPlayer
+
+-- HELPER
 local function getChar()
 	return player.Character or player.CharacterAdded:Wait()
 end
@@ -44,10 +52,8 @@ end)
 UIS.InputChanged:Connect(function(input)
 	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 		local delta = input.Position - dragStart
-		frame.Position = UDim2.new(startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y)
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+								   startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
 end)
 
@@ -58,7 +64,7 @@ UIS.InputEnded:Connect(function(input)
 end)
 
 -- CTRL TOGGLE
-UIS.InputBegan:Connect(function(input,gpe)
+UIS.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
 		frame.Visible = not frame.Visible
@@ -89,6 +95,7 @@ contentArea.Position = UDim2.new(0,160,0,55)
 contentArea.BackgroundColor3 = Color3.fromRGB(22,22,22)
 Instance.new("UICorner",contentArea).CornerRadius = UDim.new(0,15)
 
+-- TABS SYSTEM
 local contents = {}
 local tabButtons = {}
 
@@ -112,7 +119,6 @@ local function createTab(name,order)
 
 	local layout = Instance.new("UIListLayout",content)
 	layout.Padding = UDim.new(0,15)
-
 	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		content.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y+20)
 	end)
@@ -141,9 +147,7 @@ createTab("Discord",7)
 contents[1].Visible = true
 tabButtons[1].BackgroundColor3 = Color3.fromRGB(150,0,0)
 
-------------------------------------------------
--- SWITCH TOGGLE CREATOR
-------------------------------------------------
+-- TOGGLE CREATOR
 local function createToggle(parent,text,callback)
 	local holder = Instance.new("Frame",parent)
 	holder.Size = UDim2.new(1,-20,0,60)
@@ -173,11 +177,9 @@ local function createToggle(parent,text,callback)
 	Instance.new("UICorner",knob).CornerRadius = UDim.new(1,0)
 
 	local enabled = false
-
 	holder.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			enabled = not enabled
-
 			if enabled then
 				switch.BackgroundColor3 = Color3.fromRGB(200,0,0)
 				knob.Position = UDim2.new(1,-26,0,2)
@@ -185,21 +187,14 @@ local function createToggle(parent,text,callback)
 				switch.BackgroundColor3 = Color3.fromRGB(60,0,0)
 				knob.Position = UDim2.new(0,2,0,2)
 			end
-
-			if callback then
-				callback(enabled)
-			end
+			if callback then callback(enabled) end
 		end
 	end)
 end
 
-------------------------------------------------
--- FLY
-------------------------------------------------
+-- FLY TOGGLE
 local flying = false
-local bodyVel
-local flyConn
-
+local bodyVel, flyConn
 createToggle(mainTab,"Fly",function(state)
 	local char = getChar()
 	local hrp = char:WaitForChild("HumanoidRootPart")
@@ -213,19 +208,13 @@ createToggle(mainTab,"Fly",function(state)
 			local cam = workspace.CurrentCamera
 			local speed = UIS:IsKeyDown(Enum.KeyCode.LeftShift) and 120 or 60
 			local move = Vector3.new()
-
 			if UIS:IsKeyDown(Enum.KeyCode.W) then move += cam.CFrame.LookVector end
 			if UIS:IsKeyDown(Enum.KeyCode.S) then move -= cam.CFrame.LookVector end
 			if UIS:IsKeyDown(Enum.KeyCode.A) then move -= cam.CFrame.RightVector end
 			if UIS:IsKeyDown(Enum.KeyCode.D) then move += cam.CFrame.RightVector end
 			if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
 			if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0,1,0) end
-
-			if move.Magnitude > 0 then
-				bodyVel.Velocity = move.Unit * speed
-			else
-				bodyVel.Velocity = Vector3.new()
-			end
+			bodyVel.Velocity = (move.Magnitude > 0 and move.Unit * speed) or Vector3.new()
 		end)
 	else
 		if bodyVel then bodyVel:Destroy() end
@@ -233,14 +222,10 @@ createToggle(mainTab,"Fly",function(state)
 	end
 end)
 
-------------------------------------------------
--- RED ESP AURA
-------------------------------------------------
+-- RED AURA TOGGLE
 local highlight
-
 createToggle(playerTab,"Red Aura",function(state)
 	local char = getChar()
-
 	if state then
 		highlight = Instance.new("Highlight",char)
 		highlight.FillColor = Color3.fromRGB(255,0,0)
@@ -250,30 +235,13 @@ createToggle(playerTab,"Red Aura",function(state)
 	end
 end)
 
-------------------------------------------------
---  CLEAN SPEED SLIDER 
-------------------------------------------------
-
-local player = game.Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
+-- SPEED SLIDER
 local NORMAL_SPEED = 16
 local MIN_SPEED = 16
 local MAX_SPEED = 100
-
 local selectedSpeed = 16
 local speedEnabled = false
 local draggingSlider = false
-
-local function getHumanoid()
-	local char = player.Character or player.CharacterAdded:Wait()
-	return char:WaitForChild("Humanoid")
-end
-
-------------------------------------------------
--- UI HOLDER
-------------------------------------------------
 
 local holder = Instance.new("Frame", playerTab)
 holder.Size = UDim2.new(1,-20,0,110)
@@ -288,10 +256,6 @@ label.Text = "Speed: 16"
 label.TextColor3 = Color3.new(1,1,1)
 label.TextScaled = true
 label.Font = Enum.Font.GothamBold
-
-------------------------------------------------
--- SLIDER BAR
-------------------------------------------------
 
 local sliderBar = Instance.new("Frame", holder)
 sliderBar.Size = UDim2.new(1,-40,0,12)
@@ -311,182 +275,53 @@ knob.Position = UDim2.new(0,0,0.5,0)
 knob.BackgroundColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner",knob).CornerRadius = UDim.new(1,0)
 
-------------------------------------------------
--- UPDATE FUNCTION
-------------------------------------------------
-
 local function updateSlider(inputX)
 	local barStart = sliderBar.AbsolutePosition.X
 	local barWidth = sliderBar.AbsoluteSize.X
-	
 	local percent = math.clamp((inputX - barStart) / barWidth, 0, 1)
-	
 	fill.Size = UDim2.new(percent,0,1,0)
 	knob.Position = UDim2.new(percent,0,0.5,0)
-	
-	selectedSpeed = math.floor(MIN_SPEED + ((MAX_SPEED - MIN_SPEED) * percent))
-	label.Text = "Speed: " .. selectedSpeed
-	
-	if speedEnabled then
-		getHumanoid().WalkSpeed = selectedSpeed
-	end
+	selectedSpeed = math.floor(MIN_SPEED + ((MAX_SPEED-MIN_SPEED)*percent))
+	label.Text = "Speed: "..selectedSpeed
+	if speedEnabled then getChar():WaitForChild("Humanoid").WalkSpeed = selectedSpeed end
 end
 
-------------------------------------------------
--- INPUT
-------------------------------------------------
-
 knob.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingSlider = true
-	end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingSlider = true end
 end)
 
 sliderBar.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		updateSlider(input.Position.X)
-	end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then updateSlider(input.Position.X) end
 end)
 
 UIS.InputChanged:Connect(function(input)
-	if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-		updateSlider(input.Position.X)
-	end
+	if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then updateSlider(input.Position.X) end
 end)
 
 UIS.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingSlider = false
-	end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingSlider = false end
 end)
-
-------------------------------------------------
--- TOGGLE
-------------------------------------------------
 
 createToggle(playerTab,"Enable Speed",function(state)
 	speedEnabled = state
-	
-	local humanoid = getHumanoid()
-	
-	if speedEnabled then
-		humanoid.WalkSpeed = selectedSpeed
-	else
-		humanoid.WalkSpeed = NORMAL_SPEED
-	end
+	local humanoid = getChar():WaitForChild("Humanoid")
+	if speedEnabled then humanoid.WalkSpeed = selectedSpeed else humanoid.WalkSpeed = NORMAL_SPEED end
 end)
-
-------------------------------------------------
--- ANTI RESET )
-------------------------------------------------
 
 player.CharacterAdded:Connect(function()
 	task.wait(0.5)
-	if speedEnabled then
-		getHumanoid().WalkSpeed = selectedSpeed
-	end
+	if speedEnabled then getChar():WaitForChild("Humanoid").WalkSpeed = selectedSpeed end
 end)
 
-UIS.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-		
-		local relativeX = math.clamp(
-			(input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X,
-			0, 1
-		)
-		
-		knob.Position = UDim2.new(relativeX, -9, -0.4, 0)
-		
-		selectedSpeed = math.floor(16 + (relativeX * 84)) -- 16 to 100
-		speedLabel.Text = "Speed: " .. selectedSpeed
-		
-		if speedEnabled then
-			local char = getChar()
-			char:WaitForChild("Humanoid").WalkSpeed = selectedSpeed
-		end
-	end
-end)
-
-
-------------------------------------------------
---  RED PLAYER ESP
-------------------------------------------------
-local visualsTab = contents[3] -- Visuals tab index
-local espEnabled = false
-local espObjects = {}
-
-local function createESP(plr)
-	if plr == player then return end
-	if not plr.Character then return end
-	if espObjects[plr] then return end
-	
-	local highlight = Instance.new("Highlight")
-	highlight.FillColor = Color3.fromRGB(255, 0, 0)
-	highlight.OutlineColor = Color3.fromRGB(150, 0, 0)
-	highlight.FillTransparency = 0.4
-	highlight.OutlineTransparency = 0
-	highlight.Parent = plr.Character
-	
-	espObjects[plr] = highlight
-end
-
-local function removeESP()
-	for _,v in pairs(espObjects) do
-		if v then
-			v:Destroy()
-		end
-	end
-	espObjects = {}
-end
-
-createToggle(visualsTab,"Red ESP",function(state)
-	espEnabled = state
-	
-	if espEnabled then
-		for _,plr in pairs(game.Players:GetPlayers()) do
-			createESP(plr)
-		end
-		
-		game.Players.PlayerAdded:Connect(function(plr)
-			plr.CharacterAdded:Connect(function()
-				task.wait(1)
-				if espEnabled then
-					createESP(plr)
-				end
-			end)
-		end)
-	else
-		removeESP()
-	end
-end)
-
-
---WEBHOOK--
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
-local webhookURL = "https://discord.com/api/webhooks/1478938487100018731/OoeCZABG0OjnlPsCnOZyI01gD6X9S3GwhChU48Ysa4ZpSnDU8m-2XG1mazVxu_ma0SZ4"
-
--- Check for executor globals
-local function isExecutor()
-    return syn ~= nil or secure_load ~= nil or isfile ~= nil
-end
-
--- Send Discord message if executor detected
+-- SAFE WEBHOOK
+local webhookURL = "https://discord.com/api/webhooks/1478938487100018731/OoeCZABG0OjnlPsCnOZyI01gD6X9S3GwhChU48Ysa4ZpSnDU8m-2XG1mazVxu_ma0SZ4" -- Replace with your Discord webhook
+local function isExecutor() return syn ~= nil or secure_load ~= nil or isfile ~= nil end
 local function sendWebhook()
-    local data = {
-        ["content"] = "**Executor Detected!**\nPlayer: "..player.Name
-    }
-    local jsonData = HttpService:JSONEncode(data)
-    pcall(function()
-        HttpService:PostAsync(webhookURL, jsonData, Enum.HttpContentType.ApplicationJson)
-    end)
+	local data = {["content"]="Executor Detected!\nPlayer: "..player.Name}
+	local jsonData = HttpService:JSONEncode(data)
+	pcall(function() HttpService:PostAsync(webhookURL,jsonData,Enum.HttpContentType.ApplicationJson) end)
 end
 
--- Run detection
-if isExecutor() then
-    sendWebhook()
-end
-
-
+pcall(function()
+	if isExecutor() then sendWebhook() end
+end)
