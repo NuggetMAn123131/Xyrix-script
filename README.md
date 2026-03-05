@@ -1,7 +1,7 @@
 # Xyrix-script
 script rblx
 
-SCRIPT HERE 
+SCRIPT HERE (USING XENO) might work with others idk
 
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
@@ -251,61 +251,139 @@ createToggle(playerTab,"Red Aura",function(state)
 end)
 
 ------------------------------------------------
---  SPEED SLIDER
+--  CLEAN SPEED SLIDER 
 ------------------------------------------------
 
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
-local normalSpeed = 16
+local NORMAL_SPEED = 16
+local MIN_SPEED = 16
+local MAX_SPEED = 100
+
 local selectedSpeed = 16
 local speedEnabled = false
+local draggingSlider = false
 
-local function getChar()
-	return player.Character or player.CharacterAdded:Wait()
+local function getHumanoid()
+	local char = player.Character or player.CharacterAdded:Wait()
+	return char:WaitForChild("Humanoid")
 end
 
--- HOLDER FRAME
-local speedHolder = Instance.new("Frame", playerTab)
-speedHolder.Size = UDim2.new(1,-20,0,100)
-speedHolder.BackgroundColor3 = Color3.fromRGB(35,35,35)
-Instance.new("UICorner",speedHolder).CornerRadius = UDim.new(0,12)
+------------------------------------------------
+-- UI HOLDER
+------------------------------------------------
 
--- LABEL
-local speedLabel = Instance.new("TextLabel", speedHolder)
-speedLabel.Size = UDim2.new(1,-20,0,30)
-speedLabel.Position = UDim2.new(0,10,0,5)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "Speed: 16"
-speedLabel.TextColor3 = Color3.new(1,1,1)
-speedLabel.TextScaled = true
-speedLabel.Font = Enum.Font.GothamBold
+local holder = Instance.new("Frame", playerTab)
+holder.Size = UDim2.new(1,-20,0,110)
+holder.BackgroundColor3 = Color3.fromRGB(35,35,35)
+Instance.new("UICorner",holder).CornerRadius = UDim.new(0,12)
 
+local label = Instance.new("TextLabel", holder)
+label.Size = UDim2.new(1,-20,0,30)
+label.Position = UDim2.new(0,10,0,5)
+label.BackgroundTransparency = 1
+label.Text = "Speed: 16"
+label.TextColor3 = Color3.new(1,1,1)
+label.TextScaled = true
+label.Font = Enum.Font.GothamBold
+
+------------------------------------------------
 -- SLIDER BAR
-local sliderBar = Instance.new("Frame", speedHolder)
-sliderBar.Size = UDim2.new(1,-40,0,10)
-sliderBar.Position = UDim2.new(0,20,0,45)
+------------------------------------------------
+
+local sliderBar = Instance.new("Frame", holder)
+sliderBar.Size = UDim2.new(1,-40,0,12)
+sliderBar.Position = UDim2.new(0,20,0,50)
 sliderBar.BackgroundColor3 = Color3.fromRGB(60,0,0)
 Instance.new("UICorner",sliderBar).CornerRadius = UDim.new(1,0)
 
--- SLIDER KNOB
+local fill = Instance.new("Frame", sliderBar)
+fill.Size = UDim2.new(0,0,1,0)
+fill.BackgroundColor3 = Color3.fromRGB(200,0,0)
+Instance.new("UICorner",fill).CornerRadius = UDim.new(1,0)
+
 local knob = Instance.new("Frame", sliderBar)
 knob.Size = UDim2.new(0,18,0,18)
-knob.Position = UDim2.new(0,0,-0.4,0)
-knob.BackgroundColor3 = Color3.fromRGB(255,0,0)
+knob.AnchorPoint = Vector2.new(0.5,0.5)
+knob.Position = UDim2.new(0,0,0.5,0)
+knob.BackgroundColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner",knob).CornerRadius = UDim.new(1,0)
 
-local dragging = false
+------------------------------------------------
+-- UPDATE FUNCTION
+------------------------------------------------
+
+local function updateSlider(inputX)
+	local barStart = sliderBar.AbsolutePosition.X
+	local barWidth = sliderBar.AbsoluteSize.X
+	
+	local percent = math.clamp((inputX - barStart) / barWidth, 0, 1)
+	
+	fill.Size = UDim2.new(percent,0,1,0)
+	knob.Position = UDim2.new(percent,0,0.5,0)
+	
+	selectedSpeed = math.floor(MIN_SPEED + ((MAX_SPEED - MIN_SPEED) * percent))
+	label.Text = "Speed: " .. selectedSpeed
+	
+	if speedEnabled then
+		getHumanoid().WalkSpeed = selectedSpeed
+	end
+end
+
+------------------------------------------------
+-- INPUT
+------------------------------------------------
 
 knob.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
+		draggingSlider = true
+	end
+end)
+
+sliderBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		updateSlider(input.Position.X)
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+		updateSlider(input.Position.X)
 	end
 end)
 
 UIS.InputEnded:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = false
+		draggingSlider = false
+	end
+end)
+
+------------------------------------------------
+-- TOGGLE
+------------------------------------------------
+
+createToggle(playerTab,"Enable Speed",function(state)
+	speedEnabled = state
+	
+	local humanoid = getHumanoid()
+	
+	if speedEnabled then
+		humanoid.WalkSpeed = selectedSpeed
+	else
+		humanoid.WalkSpeed = NORMAL_SPEED
+	end
+end)
+
+------------------------------------------------
+-- ANTI RESET )
+------------------------------------------------
+
+player.CharacterAdded:Connect(function()
+	task.wait(0.5)
+	if speedEnabled then
+		getHumanoid().WalkSpeed = selectedSpeed
 	end
 end)
 
@@ -329,22 +407,7 @@ UIS.InputChanged:Connect(function(input)
 	end
 end)
 
-------------------------------------------------
--- TOGGLE
-------------------------------------------------
 
-createToggle(playerTab,"Enable Speed",function(state)
-	speedEnabled = state
-	
-	local char = getChar()
-	local humanoid = char:WaitForChild("Humanoid")
-	
-	if speedEnabled then
-		humanoid.WalkSpeed = selectedSpeed
-	else
-		humanoid.WalkSpeed = normalSpeed
-	end
-end)
 ------------------------------------------------
 --  RED PLAYER ESP
 ------------------------------------------------
@@ -396,5 +459,7 @@ createToggle(visualsTab,"Red ESP",function(state)
 		removeESP()
 	end
 end)
+
+
 
 
