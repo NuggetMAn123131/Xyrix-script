@@ -251,7 +251,7 @@ createToggle(playerTab,"Red Aura",function(state)
 end)
 
 ------------------------------------------------
--- 🏃 SPEED SLIDER
+--  SPEED SLIDER
 ------------------------------------------------
 
 local player = game.Players.LocalPlayer
@@ -346,7 +346,7 @@ createToggle(playerTab,"Enable Speed",function(state)
 	end
 end)
 ------------------------------------------------
--- 🔴 RED PLAYER ESP
+--  RED PLAYER ESP
 ------------------------------------------------
 local visualsTab = contents[3] -- Visuals tab index
 local espEnabled = false
