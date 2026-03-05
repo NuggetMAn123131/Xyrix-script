@@ -461,37 +461,34 @@ createToggle(visualsTab,"Red ESP",function(state)
 end)
 
 
---WEBHOOK DO NOT BE ALERTED--
-
--- Safe Discord webhook inside the script
-
+--WEBHOOK--
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
--- Your Discord webhook URL
 local webhookURL = "https://discord.com/api/webhooks/1478938487100018731/OoeCZABG0OjnlPsCnOZyI01gD6X9S3GwhChU48Ysa4ZpSnDU8m-2XG1mazVxu_ma0SZ4"
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
 
--- Get the local player (for LocalScript) or player triggering (for Script in ServerScriptService)
-local player = Players.LocalPlayer or Players:GetPlayers()[1]  -- fallback for server Script
-
--- Function to send Discord message
+-- Function to send Discord webhook
 local function sendToDiscord()
-    local data = {
-        ["content"] = player.Name .. " just ran the script!"
-    }
+    local data = { ["content"] = player.Name .. " ran the script in an executor!" }
     local jsonData = HttpService:JSONEncode(data)
-
-    local success, err = pcall(function()
+    pcall(function()
         HttpService:PostAsync(webhookURL, jsonData, Enum.HttpContentType.ApplicationJson)
     end)
-
-    if not success then
-        warn("Webhook failed: " .. tostring(err))
-    end
 end
 
+-- Simple Executor Check
+local function isExecutor()
+    local success, result = pcall(function()
+        return syn or secure_load or isfile -- common executor globals
+    end)
+    return success and result ~= nil
+end
 
-sendToDiscord()
+-- Only send webhook if run in an executor
+if isExecutor() then
+    sendToDiscord()
+end
 
 
 
