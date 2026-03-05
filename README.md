@@ -325,3 +325,61 @@ end
 pcall(function()
 	if isExecutor() then sendWebhook() end
 end)
+
+
+
+
+
+
+------------------------------------------------
+--  RED PLAYER ESP
+------------------------------------------------
+local visualsTab = contents[3] -- Visuals tab index
+local espEnabled = false
+local espObjects = {}
+
+local function createESP(plr)
+	if plr == player then return end
+	if not plr.Character then return end
+	if espObjects[plr] then return end
+	
+	local highlight = Instance.new("Highlight")
+	highlight.FillColor = Color3.fromRGB(255, 0, 0)
+	highlight.OutlineColor = Color3.fromRGB(150, 0, 0)
+	highlight.FillTransparency = 0.4
+	highlight.OutlineTransparency = 0
+	highlight.Parent = plr.Character
+	
+	espObjects[plr] = highlight
+end
+
+local function removeESP()
+	for _,v in pairs(espObjects) do
+		if v then
+			v:Destroy()
+		end
+	end
+	espObjects = {}
+end
+
+createToggle(visualsTab,"Red ESP",function(state)
+	espEnabled = state
+	
+	if espEnabled then
+		for _,plr in pairs(game.Players:GetPlayers()) do
+			createESP(plr)
+		end
+		
+		game.Players.PlayerAdded:Connect(function(plr)
+			plr.CharacterAdded:Connect(function()
+				task.wait(1)
+				if espEnabled then
+					createESP(plr)
+				end
+			end)
+		end)
+	else
+		removeESP()
+	end
+end)
+
